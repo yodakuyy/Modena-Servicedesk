@@ -147,7 +147,11 @@ const getStatusBadgeStyles = (status: string) => {
 type SortKey = 'slaStatus' | 'urgency' | 'eta';
 type SortDirection = 'asc' | 'desc';
 
-const IncidentList: React.FC = () => {
+interface IncidentListProps {
+  onViewTicket?: (id: string) => void;
+}
+
+const IncidentList: React.FC<IncidentListProps> = ({ onViewTicket }) => {
   const [data, setData] = useState(initialIncidentData);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
@@ -545,7 +549,10 @@ const IncidentList: React.FC = () => {
                      <div className="text-gray-900 font-bold text-xs">{item.date}</div>
                   </td>
                   <td className="px-6 py-4 text-left">
-                    <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors">
+                    <button 
+                        onClick={() => onViewTicket && onViewTicket(item.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+                    >
                       <Eye size={14} />
                       View
                     </button>

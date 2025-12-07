@@ -23,6 +23,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import IncidentList from './IncidentList';
 import KnowledgeBase from './KnowledgeBase';
 import OutOfOffice from './OutOfOffice';
+import TicketDetail from './TicketDetail';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -92,7 +93,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'incidents' | 'knowledge' | 'outofoffice'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'incidents' | 'knowledge' | 'outofoffice' | 'ticket-detail'>('dashboard');
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -109,9 +111,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
     };
   }, []);
 
+  const handleViewTicket = (id: string) => {
+    setSelectedTicketId(id);
+    setCurrentView('ticket-detail');
+  };
+
   const renderContent = () => {
     if (currentView === 'incidents') {
-      return <IncidentList />;
+      return <IncidentList onViewTicket={handleViewTicket} />;
     }
     
     if (currentView === 'knowledge') {
@@ -120,6 +127,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
 
     if (currentView === 'outofoffice') {
       return <OutOfOffice />;
+    }
+
+    if (currentView === 'ticket-detail') {
+      return <TicketDetail ticketId={selectedTicketId} onBack={() => setCurrentView('incidents')} />;
     }
 
     return (
@@ -396,7 +407,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
                 'SLA Management',
                 'Business Hours',
                 'Categories',
-                'Service Request Fields'
+                'Service Request Fields',
+                'Portal Highlights'
               ].map((item) => (
                 <div key={item} className="pl-16 pr-6 py-2 text-sm text-gray-500 hover:text-indigo-600 cursor-pointer hover:bg-gray-100 transition-colors font-medium whitespace-nowrap">
                   {item}
