@@ -15,7 +15,9 @@ import {
   ArrowLeftRight,
   FileText,
   CalendarOff,
-  ChevronRight
+  ChevronRight,
+  Menu,
+  ChevronLeft
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import IncidentList from './IncidentList';
@@ -69,7 +71,7 @@ interface SidebarItemProps {
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, active = false, badge = '', onClick, expanded }) => (
   <div 
     onClick={onClick}
-    className={`flex items-center justify-between px-6 py-3 cursor-pointer border-l-4 transition-colors ${active ? 'bg-indigo-50 border-indigo-600' : 'border-transparent text-gray-500 hover:bg-gray-50'}`}
+    className={`flex items-center justify-between px-6 py-3 cursor-pointer border-l-4 transition-colors whitespace-nowrap ${active ? 'bg-indigo-50 border-indigo-600' : 'border-transparent text-gray-500 hover:bg-gray-50'}`}
   >
     <div className="flex items-center gap-3">
       {Icon && <Icon size={20} className={active ? 'text-indigo-600' : 'text-gray-400'} />}
@@ -89,6 +91,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, active = f
 const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [currentView, setCurrentView] = useState<'dashboard' | 'incidents' | 'knowledge' | 'outofoffice'>('dashboard');
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -329,15 +332,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
   return (
     <div className="flex min-h-screen bg-[#f3f4f6] font-sans">
       {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col hidden lg:flex sticky top-0 h-screen">
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-200">
-            <div className="w-4 h-4 bg-white rounded-full opacity-40" />
+      <div className={`${isSidebarOpen ? 'w-64 border-r' : 'w-0 border-none'} bg-white border-gray-200 flex flex-col hidden lg:flex sticky top-0 h-screen transition-all duration-300 overflow-hidden`}>
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-200 flex-shrink-0">
+              <div className="w-4 h-4 bg-white rounded-full opacity-40" />
+            </div>
+            <div className="overflow-hidden">
+              <h1 className="font-bold text-gray-800 text-lg leading-tight tracking-tight whitespace-nowrap">DIT</h1>
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold whitespace-nowrap">service desk</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-gray-800 text-lg leading-tight tracking-tight">Poppins</h1>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">service desk</p>
-          </div>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <ChevronLeft size={18} />
+          </button>
         </div>
 
         <nav className="flex-1 mt-6 space-y-1 overflow-y-auto custom-scrollbar">
@@ -387,7 +398,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
                 'Categories',
                 'Service Request Fields'
               ].map((item) => (
-                <div key={item} className="pl-16 pr-6 py-2 text-sm text-gray-500 hover:text-indigo-600 cursor-pointer hover:bg-gray-100 transition-colors font-medium">
+                <div key={item} className="pl-16 pr-6 py-2 text-sm text-gray-500 hover:text-indigo-600 cursor-pointer hover:bg-gray-100 transition-colors font-medium whitespace-nowrap">
                   {item}
                 </div>
               ))}
@@ -397,7 +408,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
 
         {/* User Profile */}
         <div className="p-6 border-t border-gray-100 flex items-center gap-3 relative flex-shrink-0" ref={menuRef}>
-          <img src="https://ui-avatars.com/api/?name=Yogi+Danis&background=random" alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
+          <img src="https://ui-avatars.com/api/?name=Yogi+Danis&background=random" alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-gray-700 truncate">Yogi Danis</p>
           </div>
@@ -436,7 +447,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, onChangeDepartment }) =
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        {/* Toggle Button (Visible when closed) */}
+        {!isSidebarOpen && (
+            <button 
+                onClick={() => setIsSidebarOpen(true)} 
+                className="absolute top-4 left-4 z-50 p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 text-gray-500 hover:bg-white hover:text-indigo-600 transition-colors hidden lg:block"
+            >
+                <Menu size={20} />
+            </button>
+        )}
+
         {/* Scrollable Content */}
         <main className="flex-1 overflow-auto">
           {renderContent()}

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
-import { Twitter, Instagram, MessageCircle } from 'lucide-react';
+import { Twitter, Instagram, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const data = [
   { name: 'Apr', value: 120000 },
@@ -11,7 +11,8 @@ const data = [
   { name: 'Sep', value: 160000 },
 ];
 
-const VisualSection: React.FC = () => {
+// The original dashboard visualization as Slide 1
+const OriginalSlide: React.FC = () => {
   return (
     <div className="w-full h-full relative flex flex-col items-center justify-center p-12">
       {/* Decorative Background Shapes */}
@@ -76,12 +77,6 @@ const VisualSection: React.FC = () => {
           
           {/* Recharts Area Chart */}
           <div className="h-32 w-full mt-2 relative">
-             {/* Tooltip Card Overlay for visual fidelity to image */}
-             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-md border border-gray-100 rounded p-2 z-10 hidden">
-                 <p className="text-xs font-bold text-brand-primary">$ 23,827</p>
-                 <p className="text-[10px] text-gray-400">August</p>
-             </div>
-
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data}>
                 <defs>
@@ -126,13 +121,132 @@ const VisualSection: React.FC = () => {
         <p className="text-brand-100 text-sm font-light">
           Consistent quality and experience across all platforms and devices.
         </p>
-        
-        {/* Carousel Indicators */}
-        <div className="flex justify-center gap-2 mt-6">
-          <div className="w-8 h-1.5 bg-white rounded-full opacity-100"></div>
-          <div className="w-1.5 h-1.5 bg-white rounded-full opacity-40"></div>
-          <div className="w-1.5 h-1.5 bg-white rounded-full opacity-40"></div>
+      </div>
+    </div>
+  );
+};
+
+// Component for Image Slides (Announcements/Updates)
+interface ImageSlideProps {
+  src: string;
+  title: string;
+  subtitle: string;
+}
+
+const ImageSlide: React.FC<ImageSlideProps> = ({ src, title, subtitle }) => (
+  <div className="w-full h-full relative">
+    {/* Fallback color */}
+    <div className="absolute inset-0 bg-brand-primary" />
+    
+    {/* Image with object-cover for auto-resizing */}
+    <img 
+      src={src} 
+      alt={title} 
+      className="w-full h-full object-cover opacity-90"
+    />
+    
+    {/* Gradient Overlay for text readability */}
+    <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/20 to-transparent" />
+    
+    {/* Text Content */}
+    <div className="absolute bottom-20 left-0 right-0 text-center text-white space-y-3 max-w-lg mx-auto px-8 z-10">
+      <h2 className="text-3xl font-bold tracking-tight drop-shadow-md">{title}</h2>
+      <p className="text-brand-50 text-sm font-light drop-shadow leading-relaxed">
+        {subtitle}
+      </p>
+    </div>
+  </div>
+);
+
+const VisualSection: React.FC = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    { type: 'component' },
+    { 
+      type: 'image', 
+      src: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80',
+      title: 'New Legal Service Desk',
+      subtitle: 'We are excited to announce a dedicated support channel for the Legal Department. Submit contract reviews and risk assessments directly via the new portal.'
+    },
+    { 
+      type: 'image', 
+      src: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80',
+      title: 'System Maintenance Update',
+      subtitle: 'Scheduled maintenance will occur this Saturday from 10 PM to 2 AM. Please save your work as services will be briefly unavailable.'
+    }
+  ];
+
+  // Auto-rotate slides
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000); // 5 seconds per slide
+
+    return () => clearInterval(timer);
+  }, [currentSlide, slides.length]); // Add currentSlide dependency to reset timer on manual change
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  return (
+    <div className="w-full h-full relative overflow-hidden group">
+      {/* Slides Container */}
+      {slides.map((slide, index) => (
+        <div 
+          key={index}
+          className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+            index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+          }`}
+        >
+          {slide.type === 'component' ? (
+            <OriginalSlide />
+          ) : (
+            <ImageSlide 
+              src={slide.src!} 
+              title={slide.title!} 
+              subtitle={slide.subtitle!} 
+            />
+          )}
         </div>
+      ))}
+
+      {/* Manual Navigation Arrows */}
+      <button 
+        onClick={prevSlide}
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110"
+        aria-label="Previous slide"
+      >
+        <ChevronLeft size={24} />
+      </button>
+
+      <button 
+        onClick={nextSlide}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110"
+        aria-label="Next slide"
+      >
+        <ChevronRight size={24} />
+      </button>
+
+      {/* Navigation Dots */}
+      <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-2">
+        {slides.map((_, idx) => (
+          <button 
+            key={idx}
+            onClick={() => setCurrentSlide(idx)}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              currentSlide === idx 
+                ? 'w-8 bg-white opacity-100 shadow-sm' 
+                : 'w-1.5 bg-white opacity-40 hover:opacity-70 hover:w-3'
+            }`}
+            aria-label={`Go to slide ${idx + 1}`}
+          />
+        ))}
       </div>
     </div>
   );

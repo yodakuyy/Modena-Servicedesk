@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ChevronDown, PieChart, AlertCircle, Clock, CheckCircle, Package, Plus, Eye, Filter, X } from 'lucide-react';
+import { Search, ChevronDown, PieChart, AlertCircle, Clock, CheckCircle, Package, Plus, Eye, Filter, X, Timer, ArrowUpDown } from 'lucide-react';
 
 const initialIncidentData = [
   { 
@@ -12,6 +12,7 @@ const initialIncidentData = [
     status: 'Open', 
     slaStatus: 'Running', 
     urgency: 'High', 
+    eta: '07 Hours',
     date: '04/12/23', 
     time: '08:24AM' 
   },
@@ -25,6 +26,7 @@ const initialIncidentData = [
     status: 'Open', 
     slaStatus: 'Stopped', 
     urgency: 'Medium', 
+    eta: '1 Day',
     date: '04/11/23', 
     time: '10:07AM' 
   },
@@ -38,6 +40,7 @@ const initialIncidentData = [
     status: 'Pending', 
     slaStatus: 'Stopped', 
     urgency: 'Low', 
+    eta: '1 Day',
     date: '04/10/23', 
     time: '02:34PM' 
   },
@@ -51,6 +54,7 @@ const initialIncidentData = [
     status: 'Open', 
     slaStatus: 'Running', 
     urgency: 'Medium', 
+    eta: '2 Days',
     date: '04/10/23', 
     time: '09:15AM' 
   },
@@ -64,6 +68,7 @@ const initialIncidentData = [
     status: 'Pending', 
     slaStatus: 'Stopped', 
     urgency: 'High', 
+    eta: '2 Days',
     date: '04/08/23', 
     time: '-' 
   },
@@ -77,6 +82,7 @@ const initialIncidentData = [
     status: 'Resolved', 
     slaStatus: 'Stopped', 
     urgency: 'Urgent', 
+    eta: '2 Days',
     date: '04/12/23', 
     time: '08:24AM' 
   },
@@ -90,6 +96,7 @@ const initialIncidentData = [
     status: 'Closed', 
     slaStatus: 'Stopped', 
     urgency: 'Low', 
+    eta: '2 Days',
     date: '04/11/23', 
     time: '10:07AM' 
   },
@@ -103,6 +110,7 @@ const initialIncidentData = [
     status: 'Pending', 
     slaStatus: 'Stopped', 
     urgency: 'Medium', 
+    eta: '2 Days',
     date: '04/10/23', 
     time: '02:34PM' 
   },
@@ -136,6 +144,9 @@ const getStatusBadgeStyles = (status: string) => {
     }
 }
 
+type SortKey = 'slaStatus' | 'urgency' | 'eta';
+type SortDirection = 'asc' | 'desc';
+
 const IncidentList: React.FC = () => {
   const [data, setData] = useState(initialIncidentData);
   const [searchQuery, setSearchQuery] = useState('');
@@ -146,6 +157,9 @@ const IncidentList: React.FC = () => {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedSla, setSelectedSla] = useState<string[]>([]);
   const [keywordFilter, setKeywordFilter] = useState('');
+
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
 
   // Close filter when clicking outside
   useEffect(() => {
@@ -160,14 +174,14 @@ const IncidentList: React.FC = () => {
     };
   }, []);
 
-  // Filter Logic
+  // Filter and Sort Logic
   useEffect(() => {
-    let filtered = initialIncidentData;
+    let result = [...initialIncidentData];
 
     // Main Search Bar Query
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
-      filtered = filtered.filter(item => 
+      result = result.filter(item => 
         item.id.toLowerCase().includes(lowerQuery) ||
         item.subject.toLowerCase().includes(lowerQuery) ||
         item.user.toLowerCase().includes(lowerQuery) ||
@@ -177,18 +191,18 @@ const IncidentList: React.FC = () => {
 
     // Status Filter
     if (selectedStatuses.length > 0) {
-      filtered = filtered.filter(item => selectedStatuses.includes(item.status));
+      result = result.filter(item => selectedStatuses.includes(item.status));
     }
 
     // SLA Filter
     if (selectedSla.length > 0) {
-      filtered = filtered.filter(item => selectedSla.includes(item.slaStatus));
+      result = result.filter(item => selectedSla.includes(item.slaStatus));
     }
 
     // Keyword Filter (General Search inside Filters)
     if (keywordFilter) {
       const lowerKeyword = keywordFilter.toLowerCase();
-      filtered = filtered.filter(item => 
+      result = result.filter(item => 
         item.id.toLowerCase().includes(lowerKeyword) ||
         item.subject.toLowerCase().includes(lowerKeyword) ||
         item.user.toLowerCase().includes(lowerKeyword) ||
@@ -197,8 +211,37 @@ const IncidentList: React.FC = () => {
       );
     }
 
-    setData(filtered);
-  }, [searchQuery, selectedStatuses, selectedSla, keywordFilter]);
+    // Sorting
+    if (sortConfig) {
+      result.sort((a, b) => {
+        let comparison = 0;
+        
+        if (sortConfig.key === 'urgency') {
+          const urgencyRank: Record<string, number> = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
+          const valA = urgencyRank[a.urgency.toLowerCase()] || 0;
+          const valB = urgencyRank[b.urgency.toLowerCase()] || 0;
+          comparison = valA - valB;
+        } else if (sortConfig.key === 'eta') {
+          const parseEta = (eta: string) => {
+            const match = eta.match(/(\d+)\s*(Hour|Day)/i);
+            if (!match) return 0;
+            const val = parseInt(match[1], 10);
+            const unit = match[2].toLowerCase();
+            return unit.startsWith('d') ? val * 24 : val;
+          };
+          comparison = parseEta(a.eta) - parseEta(b.eta);
+        } else {
+          // Default string comparison for SLA Status
+          if (a[sortConfig.key] < b[sortConfig.key]) comparison = -1;
+          if (a[sortConfig.key] > b[sortConfig.key]) comparison = 1;
+        }
+
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    setData(result);
+  }, [searchQuery, selectedStatuses, selectedSla, keywordFilter, sortConfig]);
 
   const toggleFilter = (list: string[], item: string, setList: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (list.includes(item)) {
@@ -212,6 +255,15 @@ const IncidentList: React.FC = () => {
     setSelectedStatuses([]);
     setSelectedSla([]);
     setKeywordFilter('');
+  };
+
+  const handleSort = (key: SortKey) => {
+    setSortConfig(current => {
+      if (current?.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
   };
 
   return (
@@ -305,8 +357,14 @@ const IncidentList: React.FC = () => {
 
       {/* Main Table Container */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100/50 flex-1 flex flex-col overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-           <h3 className="text-lg font-bold text-gray-800">Incident List</h3>
+        <div className="p-6 border-b border-gray-50 flex justify-between items-start">
+           <div>
+               <h3 className="text-lg font-bold text-gray-800">Incident List</h3>
+               <p className="text-xs text-gray-500 mt-1">
+                 <span className="font-bold text-indigo-600">53 Open</span> 
+                 <span className="text-gray-400 ml-1">(15 assigned to you)</span>
+               </p>
+           </div>
            <div className="flex items-center gap-3 flex-1 justify-end max-w-3xl">
                <div className="relative flex-1 max-w-md">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
@@ -315,8 +373,16 @@ const IncidentList: React.FC = () => {
                    value={searchQuery}
                    onChange={(e) => setSearchQuery(e.target.value)}
                    placeholder="Search by ticket number, subject, requester, or agent..." 
-                   className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 outline-none transition-all"
+                   className="pl-9 pr-9 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs w-full focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 outline-none transition-all"
                  />
+                 {searchQuery && (
+                   <button 
+                     onClick={() => setSearchQuery('')}
+                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                   >
+                     <X size={14} />
+                   </button>
+                 )}
                </div>
                
                {/* Filter Button */}
@@ -409,12 +475,34 @@ const IncidentList: React.FC = () => {
                 <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Ticket Number</th>
                 <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Subject</th>
                 <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Requested For</th>
-                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Category</th>
+                
+                {/* Reordered Columns */}
+                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Status</th>
+                
+                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 hover:text-gray-600 transition-colors" onClick={() => handleSort('slaStatus')}>
+                  <div className="flex items-center gap-1">
+                    SLA Status
+                    <ArrowUpDown size={12} className={sortConfig?.key === 'slaStatus' ? 'text-indigo-600' : 'text-gray-300'} />
+                  </div>
+                </th>
+                
+                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 hover:text-gray-600 transition-colors" onClick={() => handleSort('urgency')}>
+                   <div className="flex items-center gap-1">
+                     Urgency
+                     <ArrowUpDown size={12} className={sortConfig?.key === 'urgency' ? 'text-indigo-600' : 'text-gray-300'} />
+                   </div>
+                </th>
+                
+                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider text-center cursor-pointer hover:bg-gray-100 hover:text-gray-600 transition-colors" onClick={() => handleSort('eta')}>
+                   <div className="flex items-center justify-center gap-1">
+                     ETA
+                     <ArrowUpDown size={12} className={sortConfig?.key === 'eta' ? 'text-indigo-600' : 'text-gray-300'} />
+                   </div>
+                </th>
+
                 <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Agent</th>
                 <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Group</th>
-                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">SLA Status</th>
-                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Urgency</th>
+                <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Category</th>
                 <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider">Date <ChevronDown className="inline w-3 h-3" /></th>
                 <th className="px-6 py-4 font-normal text-xs text-gray-400 uppercase tracking-wider text-left">Action</th>
               </tr>
@@ -423,11 +511,10 @@ const IncidentList: React.FC = () => {
               {data.map((item, i) => (
                 <tr key={i} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4 text-gray-500 font-medium text-xs">{item.id}</td>
-                  <td className="px-6 py-4 text-gray-800 font-bold text-xs max-w-[240px] truncate" title={item.subject}>{item.subject}</td>
+                  <td className="px-6 py-4 text-gray-800 font-bold text-xs max-w-[200px] truncate" title={item.subject}>{item.subject}</td>
                   <td className="px-6 py-4 text-gray-500 text-xs">{item.user}</td>
-                  <td className="px-6 py-4 text-gray-500 text-xs">{item.category}</td>
-                  <td className="px-6 py-4 text-gray-500 text-xs">{item.agent}</td>
-                  <td className="px-6 py-4 text-gray-500 text-xs">{item.group}</td>
+                  
+                  {/* Reordered Body Cells */}
                   <td className="px-6 py-4">
                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusBadgeStyles(item.status)}`}>
                       {item.status}
@@ -443,9 +530,19 @@ const IncidentList: React.FC = () => {
                       {item.urgency}
                     </span>
                   </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-200">
+                        <Timer size={12} className="text-gray-500" />
+                        <span className="text-[10px] font-medium text-gray-600">{item.eta}</span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-gray-500 text-xs">{item.agent}</td>
+                  <td className="px-6 py-4 text-gray-500 text-xs">{item.group}</td>
+                  <td className="px-6 py-4 text-gray-500 text-xs">{item.category}</td>
+                  
                   <td className="px-6 py-4">
                      <div className="text-gray-900 font-bold text-xs">{item.date}</div>
-                     <div className="text-[10px] text-gray-400">{item.time}</div>
                   </td>
                   <td className="px-6 py-4 text-left">
                     <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors">
@@ -457,7 +554,7 @@ const IncidentList: React.FC = () => {
               ))}
               {data.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-6 py-12 text-center text-gray-400 text-sm">
+                  <td colSpan={12} className="px-6 py-12 text-center text-gray-400 text-sm">
                     No incidents found matching your filters.
                   </td>
                 </tr>
