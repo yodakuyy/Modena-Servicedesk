@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ChevronLeft, 
   ChevronDown, 
@@ -20,8 +20,10 @@ import {
   FileText,
   Image,
   Download,
-  Eye
+  Eye,
+  ArrowUpCircle
 } from 'lucide-react';
+import EscalateModal from './EscalateModal';
 
 interface TicketDetailProps {
   ticketId: string | null;
@@ -57,6 +59,22 @@ const mockAttachments: Attachment[] = [
 const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
   const [messageInput, setMessageInput] = useState('');
   const [activeTab, setActiveTab] = useState<'detail' | 'activities' | 'attachments'>('detail');
+  const [showActionMenu, setShowActionMenu] = useState(false);
+  const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close action menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+        setShowActionMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const renderActivities = () => (
     <div className="flex-1 overflow-y-auto p-6 bg-white">
@@ -140,8 +158,10 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
   );
 
   return (
-    <div className="flex h-full bg-[#f3f4f6] p-6 gap-6 overflow-hidden">
-      
+    <div className="flex h-full bg-[#f3f4f6] p-6 gap-6 overflow-hidden relative">
+      {/* Escalate Modal */}
+      {showEscalateModal && <EscalateModal onClose={() => setShowEscalateModal(false)} />}
+
       {/* Left Column - Chat Area */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         
@@ -167,7 +187,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
             </button>
         </div>
 
-        {/* Ticket Header - Only show on Detail tab or always? Screenshot implied generic header but let's keep it consistent */}
+        {/* Ticket Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white z-10">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100">
@@ -182,17 +202,37 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
           </div>
           
           <div className="flex items-center gap-2">
-             <button className="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-50 transition-colors">
-               Close Ticket
-             </button>
-             <button className="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1">
-               Action <ChevronDown size={14} />
-             </button>
              <button 
                onClick={onBack}
-               className="px-4 py-2 bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-1"
+               className="px-4 py-2 bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors"
              >
-               <ChevronLeft size={14} /> View Less
+               Cancel Ticket
+             </button>
+             
+             <div className="relative" ref={actionMenuRef}>
+               <button 
+                 onClick={() => setShowActionMenu(!showActionMenu)}
+                 className="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
+               >
+                 Action <ChevronDown size={14} />
+               </button>
+               {showActionMenu && (
+                 <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                   <button className="w-full px-4 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50">
+                     Pending
+                   </button>
+                   <button className="w-full px-4 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50">
+                     Resolved
+                   </button>
+                 </div>
+               )}
+             </div>
+
+             <button 
+               onClick={() => setShowEscalateModal(true)}
+               className="px-4 py-2 bg-cyan-50 border border-cyan-100 text-cyan-600 text-xs font-bold rounded-lg hover:bg-cyan-100 transition-colors flex items-center gap-1"
+             >
+               <ArrowUpCircle size={14} /> Escalate
              </button>
           </div>
         </div>
