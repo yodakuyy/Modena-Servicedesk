@@ -11,7 +11,9 @@ import {
   Star, 
   ExternalLink,
   Edit2,
-  Trash2
+  Trash2,
+  Info,
+  List
 } from 'lucide-react';
 
 interface TicketDetailProps {
@@ -21,6 +23,7 @@ interface TicketDetailProps {
 
 const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
   const [messageInput, setMessageInput] = useState('');
+  const [activeTab, setActiveTab] = useState<'detail' | 'activities' | 'attachments'>('detail');
 
   return (
     <div className="flex h-full bg-[#f3f4f6] p-6 gap-6 overflow-hidden">
@@ -28,8 +31,30 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
       {/* Left Column - Chat Area */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+        {/* Tab Navigation */}
+        <div className="px-6 py-3 border-b border-gray-50 flex items-center gap-1 bg-white sticky top-0 z-20">
+            <button 
+                onClick={() => setActiveTab('detail')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${activeTab === 'detail' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <Info size={16} /> Detail
+            </button>
+            <button 
+                onClick={() => setActiveTab('activities')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${activeTab === 'activities' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <List size={16} /> Activities
+            </button>
+            <button 
+                onClick={() => setActiveTab('attachments')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${activeTab === 'attachments' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                <Paperclip size={16} /> Attachments
+            </button>
+        </div>
+
+        {/* Ticket Header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white z-10">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100">
                <span className="text-xs font-bold text-gray-500">#</span>
