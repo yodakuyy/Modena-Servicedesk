@@ -8,7 +8,12 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'login' | 'departments' | 'dashboard'>('login');
 
   if (currentView === 'dashboard') {
-    return <Dashboard />;
+    return (
+      <Dashboard 
+        onLogout={() => setCurrentView('login')}
+        onChangeDepartment={() => setCurrentView('departments')}
+      />
+    );
   }
 
   if (currentView === 'departments') {
