@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   ChevronLeft, 
@@ -13,7 +14,13 @@ import {
   Edit2,
   Trash2,
   Info,
-  List
+  List,
+  CheckCircle,
+  Plus,
+  FileText,
+  Image,
+  Download,
+  Eye
 } from 'lucide-react';
 
 interface TicketDetailProps {
@@ -21,9 +28,116 @@ interface TicketDetailProps {
   onBack: () => void;
 }
 
+interface ActivityLog {
+  id: number;
+  type: 'status_change' | 'created' | 'assigned';
+  title: string;
+  user: string;
+  timestamp: string;
+}
+
+interface Attachment {
+  id: number;
+  name: string;
+  size: string;
+  type: 'image' | 'file';
+}
+
+const mockActivities: ActivityLog[] = [
+  { id: 1, type: 'status_change', title: 'Status changed from New to Open', user: 'System', timestamp: '28 Feb 2025 - 10:40 PM' },
+  { id: 2, type: 'created', title: 'Ticket Created', user: 'John Doe', timestamp: '28 Feb 2025 - 10:39 PM' },
+  { id: 3, type: 'assigned', title: 'Assigned to Mike Ross', user: 'System Automated Rule', timestamp: '28 Feb 2025 - 10:45 PM' },
+];
+
+const mockAttachments: Attachment[] = [
+  { id: 1, name: 'screenshot_error_sap.png', size: '2.4 MB', type: 'image' },
+  { id: 2, name: 'system_logs.txt', size: '15 KB', type: 'file' },
+];
+
 const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
   const [messageInput, setMessageInput] = useState('');
   const [activeTab, setActiveTab] = useState<'detail' | 'activities' | 'attachments'>('detail');
+
+  const renderActivities = () => (
+    <div className="flex-1 overflow-y-auto p-6 bg-white">
+      <div className="flex items-center gap-2 mb-6">
+        <div className="p-1.5 bg-gray-100 rounded-md">
+           <List size={18} className="text-gray-600" />
+        </div>
+        <h3 className="font-bold text-gray-800">Activity Log</h3>
+      </div>
+      
+      <div className="relative pl-4 space-y-8">
+        {/* Vertical Line */}
+        <div className="absolute top-2 bottom-2 left-[23px] w-0.5 bg-gray-100"></div>
+
+        {mockActivities.map((activity, index) => (
+          <div key={activity.id} className="relative flex gap-4 items-start group">
+            {/* Icon Node */}
+            <div className={`z-10 w-10 h-10 rounded-full border-4 border-white shadow-sm flex items-center justify-center flex-shrink-0 ${
+              activity.type === 'status_change' ? 'bg-green-50 text-green-600' :
+              activity.type === 'created' ? 'bg-blue-50 text-blue-600' :
+              'bg-purple-50 text-purple-600'
+            }`}>
+               {activity.type === 'status_change' && <CheckCircle size={16} />}
+               {activity.type === 'created' && <Plus size={16} />}
+               {activity.type === 'assigned' && <Edit2 size={16} />}
+            </div>
+
+            <div className="flex-1 pt-1">
+               <p className="font-bold text-gray-800 text-sm">{activity.title}</p>
+               <p className="text-xs text-gray-500 mt-0.5">by <span className="font-medium text-gray-700">{activity.user}</span></p>
+               <div className="flex items-center gap-1.5 mt-2 text-[10px] text-gray-400 font-medium">
+                  <Clock size={10} /> {activity.timestamp}
+               </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAttachments = () => (
+    <div className="flex-1 overflow-y-auto p-6 bg-white">
+      <div className="flex items-center gap-2 mb-6">
+        <Paperclip size={18} className="text-gray-800 font-bold" strokeWidth={2.5} />
+        <h3 className="font-bold text-gray-800">Attachments ({mockAttachments.length})</h3>
+      </div>
+
+      <div className="space-y-4">
+        {mockAttachments.map((file) => (
+          <div key={file.id} className="border border-gray-100 rounded-xl p-4 flex items-center justify-between hover:shadow-sm transition-shadow">
+             <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  file.type === 'image' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'
+                }`}>
+                   {file.type === 'image' ? <Image size={24} /> : <FileText size={24} />}
+                </div>
+                <div>
+                   <p className="font-bold text-gray-800 text-sm mb-0.5">{file.name}</p>
+                   <p className="text-xs text-gray-400">{file.size}</p>
+                </div>
+             </div>
+             
+             <div className="flex items-center gap-2">
+                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors" title="View">
+                   <Eye size={18} />
+                </button>
+                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors" title="Download">
+                   <Download size={18} />
+                </button>
+             </div>
+          </div>
+        ))}
+
+        {/* Upload Placeholder */}
+        <button className="w-full h-24 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50/10 transition-all gap-2 group">
+           <Plus size={24} className="group-hover:scale-110 transition-transform" />
+           <span className="text-sm font-medium">Upload new file</span>
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex h-full bg-[#f3f4f6] p-6 gap-6 overflow-hidden">
@@ -53,7 +167,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
             </button>
         </div>
 
-        {/* Ticket Header */}
+        {/* Ticket Header - Only show on Detail tab or always? Screenshot implied generic header but let's keep it consistent */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white z-10">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100">
@@ -83,109 +197,114 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
           </div>
         </div>
 
-        {/* Chat Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30 custom-scrollbar">
-          
-           {/* System Message */}
-           <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-indigo-900 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-                 HB
-              </div>
-              <div className="flex-1">
-                 <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-sm font-bold text-gray-800">Hippo Bot</span>
-                 </div>
-                 <div className="bg-indigo-900 text-white p-4 rounded-2xl rounded-tl-none shadow-sm text-sm leading-relaxed max-w-2xl">
-                    Thank you for contacting us. We have opened case {ticketId || 'Case-1'} to address your request. Sincerely,
-                 </div>
-                 <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-                    <Clock size={12} /> Read • 28 Feb 2025 - 6:40 PM
-                 </div>
-              </div>
-           </div>
+        {/* Content Area */}
+        {activeTab === 'detail' && (
+            <>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30 custom-scrollbar">
+                {/* System Message */}
+                <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-900 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                        HB
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-sm font-bold text-gray-800">Hippo Bot</span>
+                        </div>
+                        <div className="bg-indigo-900 text-white p-4 rounded-2xl rounded-tl-none shadow-sm text-sm leading-relaxed max-w-2xl">
+                            Thank you for contacting us. We have opened case {ticketId || 'Case-1'} to address your request. Sincerely,
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
+                            <Clock size={12} /> Read • 28 Feb 2025 - 6:40 PM
+                        </div>
+                    </div>
+                </div>
 
-           {/* User Message */}
-           <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
-                 <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" alt="User" />
-              </div>
-              <div className="flex-1">
-                 <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-sm font-bold text-gray-800">John Doe</span>
-                 </div>
-                 <div className="bg-white border border-gray-200 text-gray-700 p-4 rounded-2xl rounded-tl-none shadow-sm text-sm leading-relaxed max-w-3xl">
-                    The user interface, while functional, was somewhat confusing in certain areas, making it challenging to navigate and use effectively. This lack of clarity could potentially hinder users from fully utilizing the platform's features. Additionally, the presence of several spelling and grammar mistakes throughout the system further impacts the overall user experience, as it may reduce the perceived professionalism and reliability...
-                    <div className="mt-2 text-indigo-600 font-semibold cursor-pointer text-xs">Read More</div>
-                 </div>
-                 <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-                    <Clock size={12} /> Read • 28 Feb 2025 - 12:40 PM
-                 </div>
-              </div>
-           </div>
+                {/* User Message */}
+                <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
+                        <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" alt="User" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-sm font-bold text-gray-800">John Doe</span>
+                        </div>
+                        <div className="bg-white border border-gray-200 text-gray-700 p-4 rounded-2xl rounded-tl-none shadow-sm text-sm leading-relaxed max-w-3xl">
+                            The user interface, while functional, was somewhat confusing in certain areas, making it challenging to navigate and use effectively. This lack of clarity could potentially hinder users from fully utilizing the platform's features. Additionally, the presence of several spelling and grammar mistakes throughout the system further impacts the overall user experience, as it may reduce the perceived professionalism and reliability...
+                            <div className="mt-2 text-indigo-600 font-semibold cursor-pointer text-xs">Read More</div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
+                            <Clock size={12} /> Read • 28 Feb 2025 - 12:40 PM
+                        </div>
+                    </div>
+                </div>
 
-           {/* Agent Message */}
-           <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-indigo-800 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-                 AG
-              </div>
-              <div className="flex-1">
-                 <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-sm font-bold text-gray-800">Agent</span>
-                 </div>
-                 <div className="bg-[#1e1b4b] text-gray-100 p-4 rounded-2xl rounded-tl-none shadow-md text-sm leading-relaxed max-w-2xl">
-                    Thank you for your feedback. We're working to improve the interface for better clarity and usability while also addressing any language errors. Your insights are invaluable, and we appreciate your help in making the platform better.<br/>
-                    Best regards,
-                 </div>
-                 <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-                    <Clock size={12} /> Read • 28 Feb 2025 - 10:45 PM
-                 </div>
-              </div>
-           </div>
-           
-           {/* Agent Message 2 */}
-           <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-indigo-800 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-                 AG
-              </div>
-              <div className="flex-1">
-                 <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-sm font-bold text-gray-800">Agent</span>
-                 </div>
-                 <div className="bg-[#1e1b4b] text-gray-100 p-4 rounded-2xl rounded-tl-none shadow-md text-sm leading-relaxed max-w-2xl">
-                    Hello again,<br/><br/>
-                    We've made some updates based on your feedback. Could you please check and let us know if everything looks good on your end? Your input helps us refine the experience further.<br/>
-                    Best regards,
-                 </div>
-                 <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-                    <Clock size={12} /> Read • 28 Feb 2025 - 10:45 PM
-                 </div>
-              </div>
-           </div>
+                {/* Agent Message */}
+                <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-800 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                        AG
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-sm font-bold text-gray-800">Agent</span>
+                        </div>
+                        <div className="bg-[#1e1b4b] text-gray-100 p-4 rounded-2xl rounded-tl-none shadow-md text-sm leading-relaxed max-w-2xl">
+                            Thank you for your feedback. We're working to improve the interface for better clarity and usability while also addressing any language errors. Your insights are invaluable, and we appreciate your help in making the platform better.<br/>
+                            Best regards,
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
+                            <Clock size={12} /> Read • 28 Feb 2025 - 10:45 PM
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Agent Message 2 */}
+                <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-800 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                        AG
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-sm font-bold text-gray-800">Agent</span>
+                        </div>
+                        <div className="bg-[#1e1b4b] text-gray-100 p-4 rounded-2xl rounded-tl-none shadow-md text-sm leading-relaxed max-w-2xl">
+                            Hello again,<br/><br/>
+                            We've made some updates based on your feedback. Could you please check and let us know if everything looks good on your end? Your input helps us refine the experience further.<br/>
+                            Best regards,
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
+                            <Clock size={12} /> Read • 28 Feb 2025 - 10:45 PM
+                        </div>
+                    </div>
+                </div>
+                </div>
 
-        </div>
+                {/* Input Area */}
+                <div className="p-4 bg-white border-t border-gray-100">
+                <div className="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-xl p-2 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
+                    <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                        <Paperclip size={18} />
+                    </button>
+                    <textarea
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        placeholder="Start Typing..."
+                        className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 max-h-32 resize-none placeholder:text-gray-400"
+                        rows={1}
+                        style={{ minHeight: '40px' }}
+                    />
+                    <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                        <Smile size={18} />
+                    </button>
+                    <button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm">
+                        <Send size={18} />
+                    </button>
+                </div>
+                </div>
+            </>
+        )}
 
-        {/* Input Area */}
-        <div className="p-4 bg-white border-t border-gray-100">
-           <div className="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-xl p-2 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all">
-              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                 <Paperclip size={18} />
-              </button>
-              <textarea
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Start Typing..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 max-h-32 resize-none placeholder:text-gray-400"
-                rows={1}
-                style={{ minHeight: '40px' }}
-              />
-              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                 <Smile size={18} />
-              </button>
-              <button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm">
-                 <Send size={18} />
-              </button>
-           </div>
-        </div>
+        {activeTab === 'activities' && renderActivities()}
+        {activeTab === 'attachments' && renderAttachments()}
 
       </div>
 
