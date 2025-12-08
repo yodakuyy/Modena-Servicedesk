@@ -21,7 +21,8 @@ import {
   Image,
   Download,
   Eye,
-  ArrowUpCircle
+  ArrowUpCircle,
+  ArrowLeft
 } from 'lucide-react';
 import EscalateModal from './EscalateModal';
 
@@ -61,6 +62,7 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
   const [activeTab, setActiveTab] = useState<'detail' | 'activities' | 'attachments'>('detail');
   const [showActionMenu, setShowActionMenu] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(true);
   const actionMenuRef = useRef<HTMLDivElement>(null);
 
   // Close action menu when clicking outside
@@ -165,6 +167,16 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
       {/* Left Column - Chat Area */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         
+        {/* Back Button Header */}
+        <div className="px-6 py-2 border-b border-gray-50 flex items-center bg-white">
+            <button 
+                onClick={onBack} 
+                className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 text-xs font-bold transition-colors py-1"
+            >
+                <ArrowLeft size={16} /> Back to List
+            </button>
+        </div>
+
         {/* Tab Navigation */}
         <div className="px-6 py-3 border-b border-gray-50 flex items-center gap-1 bg-white sticky top-0 z-20">
             <button 
@@ -203,7 +215,6 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
           
           <div className="flex items-center gap-2">
              <button 
-               onClick={onBack}
                className="px-4 py-2 bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors"
              >
                Cancel Ticket
@@ -353,55 +364,61 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticketId, onBack }) => {
         
         {/* Contact Details Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-           <div className="flex justify-between items-center mb-4 cursor-pointer">
+           <div 
+              className="flex justify-between items-center mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setIsContactDetailsOpen(!isContactDetailsOpen)}
+           >
               <h3 className="font-bold text-gray-800 text-sm">Contact Details</h3>
-              <ChevronDown size={16} className="text-gray-400" />
+              <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isContactDetailsOpen ? 'rotate-180' : ''}`} />
            </div>
            
-           <div className="space-y-4">
-              <div>
-                 <p className="text-xs font-bold text-gray-500 mb-2">Requester Information</p>
-                 <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-3">
-                    <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" className="w-8 h-8 rounded-full" alt="" />
-                    <div className="flex-1 min-w-0">
-                       <p className="text-sm font-bold text-gray-800 truncate">John Doe</p>
-                       <p className="text-xs text-gray-500 truncate">johndoe@gmail.com</p>
-                    </div>
-                    <div className="flex gap-1">
-                       <button className="p-1 text-gray-400 hover:text-gray-600"><Edit2 size={12} /></button>
-                       <button className="p-1 text-gray-400 hover:text-gray-600"><ChevronDown size={12} /></button>
-                    </div>
-                 </div>
-              </div>
+           {isContactDetailsOpen && (
+             <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+                <div>
+                   <p className="text-xs font-bold text-gray-500 mb-1.5">Requester</p>
+                   <div className="flex items-center gap-3">
+                      <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" className="w-9 h-9 rounded-full" alt="" />
+                      <div className="min-w-0">
+                         <p className="text-sm font-bold text-gray-800 truncate">John Doe</p>
+                         <p className="text-xs text-gray-400 truncate">johndoe@gmail.com</p>
+                      </div>
+                   </div>
+                </div>
 
-              <div>
-                 <p className="text-xs font-bold text-gray-500 mb-2">Shared with</p>
-                 <div className="space-y-2">
-                    <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-3">
-                        <img src="https://ui-avatars.com/api/?name=Jane+Walker&background=random" className="w-8 h-8 rounded-full" alt="" />
-                        <div className="flex-1 min-w-0">
-                           <p className="text-sm font-bold text-gray-800 truncate">Jane Walker</p>
-                           <p className="text-xs text-gray-500 truncate">johndoe@gmail.com</p>
-                        </div>
-                        <div className="flex gap-1">
-                           <button className="p-1 text-gray-400 hover:text-gray-600"><Edit2 size={12} /></button>
-                           <button className="p-1 text-gray-400 hover:text-gray-600"><ChevronDown size={12} /></button>
-                        </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-3">
-                        <img src="https://ui-avatars.com/api/?name=Evelyn+Milton&background=random" className="w-8 h-8 rounded-full" alt="" />
-                        <div className="flex-1 min-w-0">
-                           <p className="text-sm font-bold text-gray-800 truncate">Evelyn Milton</p>
-                           <p className="text-xs text-gray-500 truncate">johndoe@gmail.com</p>
-                        </div>
-                        <div className="flex gap-1">
-                           <button className="p-1 text-gray-400 hover:text-gray-600"><Edit2 size={12} /></button>
-                           <button className="p-1 text-gray-400 hover:text-gray-600"><ChevronDown size={12} /></button>
-                        </div>
-                    </div>
-                 </div>
-              </div>
-           </div>
+                <div>
+                   <p className="text-xs font-bold text-gray-500 mb-1.5">Requested For</p>
+                   <div className="flex items-center gap-3">
+                      <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" className="w-9 h-9 rounded-full" alt="" />
+                      <div className="min-w-0">
+                         <p className="text-sm font-bold text-gray-800 truncate">John Doe</p>
+                         <p className="text-xs text-gray-400 truncate">johndoe@gmail.com</p>
+                      </div>
+                   </div>
+                </div>
+
+                <div>
+                   <p className="text-xs font-bold text-gray-500 mb-1.5">Agent</p>
+                   <div className="flex items-center gap-3">
+                      <img src="https://ui-avatars.com/api/?name=Mike+Ross&background=random" className="w-9 h-9 rounded-full" alt="" />
+                      <div className="min-w-0">
+                         <p className="text-sm font-bold text-gray-800 truncate">Mike Ross</p>
+                         <p className="text-xs text-gray-400 truncate">Support Agent</p>
+                      </div>
+                   </div>
+                </div>
+
+                <div>
+                   <p className="text-xs font-bold text-gray-500 mb-1.5">Second Layer Agent</p>
+                   <div className="flex items-center gap-3">
+                      <img src="https://ui-avatars.com/api/?name=Jane+Walker&background=random" className="w-9 h-9 rounded-full" alt="" />
+                      <div className="min-w-0">
+                         <p className="text-sm font-bold text-gray-800 truncate">Jane Walker</p>
+                         <p className="text-xs text-gray-400 truncate">Network Specialist</p>
+                      </div>
+                   </div>
+                </div>
+             </div>
+           )}
         </div>
 
         {/* Ticket Details Card */}
